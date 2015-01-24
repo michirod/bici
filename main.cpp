@@ -114,8 +114,8 @@ int main(int argc, char** argv)
 		addCampione(frame_diff, &campioni);
 		puntilinea.stato = findObjectsInLine((&campioni)->andCampioni, maschera, linea);
 		displayLineStatus(linea, "Line");
-		DisegnaLineaTrapasso(puntilinea);
-		retcode=(char)(display_image(30));
+		//DisegnaLineaTrapasso(puntilinea);
+		retcode=(char)(display_image(5));
 		frame_number++;
 	}
 
@@ -270,21 +270,21 @@ IplImage * CreaMaschera(CvSize in_size, lineaTrapasso puntilinea)
 	IplImage * result;
 	result = cvCreateImage(in_size,IPL_DEPTH_8U,1);
 	cvZero(result);
-	cvLine(result, puntilinea.A, puntilinea.B, CV_RGB(255, 255, 255),3,8,0);
+	cvLine(result, puntilinea.A, puntilinea.B, CV_RGB(255, 255, 255),LINE_THICKNESS,8,0);
 
 	//Visualize
 	cvResizeWindow(win,result->width,result->height);
 	cvShowImage(win, result);
-	cvWaitKey(1000);
+	cvWaitKey(10);
 	return result;
 }
 
 void DisegnaLineaTrapasso(lineaTrapasso puntilinea)
 {
 	if (puntilinea.stato)
-		cvLine(avi.frame, puntilinea.A, puntilinea.B, CV_RGB(255, 0, 0),3,8,0);
+		cvLine(avi.frame, puntilinea.A, puntilinea.B, CV_RGB(255, 0, 0),LINE_THICKNESS,8,0);
 	else
-		cvLine(avi.frame, puntilinea.A, puntilinea.B, CV_RGB(0, 255, 0),3,8,0);
+		cvLine(avi.frame, puntilinea.A, puntilinea.B, CV_RGB(0, 255, 0),LINE_THICKNESS,8,0);
 }
 
 void lineControl()

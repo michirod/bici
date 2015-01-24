@@ -61,6 +61,7 @@ void destroyArrayCampioni(ArrayCampioni * c)
 
 void displayLineStatus(IplImage * line, char * winName)
 {
+	cvDilate(line,line,NULL,13);
 	cvResizeWindow(winName,line->width,line->height);
 	cvShowImage(winName, line);
 	//return cvWaitKey(delay);

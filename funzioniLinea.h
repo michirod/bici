@@ -10,7 +10,8 @@
 
 #include "opencv/cv.h"
 #include "opencv/highgui.h"
-#define NUMERO_CAMPIONI 5
+#define NUMERO_CAMPIONI 7
+#define LINE_THICKNESS 200
 
 typedef struct
 {
