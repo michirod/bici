@@ -68,7 +68,7 @@ int main(int argc, char** argv)
 	/*
 	printf("Insert file name : ");
 	scanf("%s",filename);*/
-	sprintf(filename,"./VideoNostri/AO1.avi");
+	sprintf(filename,"./Video/AO1.avi");
 	
 	while(res!=1)
 	{
