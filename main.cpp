@@ -1,3 +1,14 @@
+/* Passiamoci le info qui!
+
+Dunque, piccola nota, abbiamo due funzioni che fanno praticamente lo stesso (int display_image(int delay) e 
+void displayLineStatus(IplImage * line, char * winName))  --> da uniformare!
+
+Poi dobbiamo creare anche una struttura di un punto x,y (anche se credo esista già) e utilizzarla per creare le altre strutture perchè
+io sto utilizzando array bidimensionali per lavorare coi punti al momento
+
+*/
+
+
 #include <stdio.h>
 #include "opencv/cv.h"
 #include "opencv/highgui.h"
@@ -59,11 +70,18 @@ int main(int argc, char** argv)
 	IplImage * maschera;
 	IplImage * linea;
 	lineaTrapasso puntilinea;
-	ArrayCampioni campioni;
+	ArrayCampioni campioni;		//CAMPIONI DI IMMAGINE, MAGARI SISTEMIAMO IL NOME DELLA STRUTTURA
+	int excited_points[EXCITED_POINTS][2];	//da sistemare, magari mettiamo un arrai di strutture punti
+	int num_excited_points=0;
 	CvSize size;
 
 	frame_number=0;
-	
+	for(int i = 0; i < EXCITED_POINTS; i++)
+	{
+		excited_points[EXCITED_POINTS][0] = 0;
+		excited_points[EXCITED_POINTS][1] = 0;
+	}
+
 	printf("Blabbla\n");	
 	/*
 	printf("Insert file name : ");
@@ -112,9 +130,10 @@ int main(int argc, char** argv)
 	{
 		elab(avi.frame);
 		addCampione(frame_diff, &campioni);
-		puntilinea.stato = findObjectsInLine((&campioni)->andCampioni, maschera, linea);
-		displayLineStatus(linea, "Line");
-		//DisegnaLineaTrapasso(puntilinea);
+		if(frame_number>1)
+			puntilinea.stato = findObjectsInLine((&campioni)->andCampioni, maschera, linea, excited_points, &num_excited_points);  //And con la maschera e mette il risultato in linea (Non ha molto senso chiamare linea questa immagine!!)
+		displayLineStatus(linea, "Line"); //visualizza i pixel eccitati della linea
+		DisegnaLineaTrapasso(puntilinea);
 		retcode=(char)(display_image(5));
 		frame_number++;
 	}
@@ -287,7 +306,3 @@ void DisegnaLineaTrapasso(lineaTrapasso puntilinea)
 		cvLine(avi.frame, puntilinea.A, puntilinea.B, CV_RGB(0, 255, 0),LINE_THICKNESS,8,0);
 }
 
-void lineControl()
-{
-
-}
