@@ -1,5 +1,7 @@
 #include "funzioniLinea.h"
 
+int countertemporaneo = 0;
+
 void initArrayCampioni(ArrayCampioni * c, CvSize size)
 {
 	for (int i = 0; i < NUMERO_CAMPIONI; i++)
@@ -49,11 +51,14 @@ bool findObjectsInLine(IplImage * andCampioni, IplImage * lineMask, IplImage * r
 				actual_active_points[contatemp][0] = i;	//salvo il punto attivo per il prossimo ciclo
 				actual_active_points[contatemp][1] = j;
 				contatemp++;															   				
-				if(AroundExcitation(result,i,j,50,active_points, *num_active_points, 0) == 0)  //qui controlliamo se c'era già un oggetto al ciclo precedente. 5 = "raggio" della zona quadrata in cui cerchiamo se è già stato attivato un pixel al frame precedente
+				if(AroundExcitation(i,j,50,active_points, *num_active_points, 0) == 0)  //qui controlliamo se c'era già un oggetto al ciclo precedente. 5 = "raggio" della zona quadrata in cui cerchiamo se è già stato attivato un pixel al frame precedente
 				{
-					//qui invece dobbiamo valutare quanti nuovi oggetti sono presenti, i potrebbe usare lo stesso raggio di eccitazionePrecedente magari facciamo una define
-					if(AroundExcitation(result,i,j,50,actual_active_points, contatemp, 1) == 0)  //parametro tipo = 1, significa frame attuale
+					//qui invece dobbiamo valutare quanti nuovi oggetti sono presenti, si potrebbe usare lo stesso raggio di eccitazionePrecedente magari facciamo una define
+					if(AroundExcitation(i,j,50,actual_active_points, contatemp, 1) == 0)  //parametro tipo = 1, significa frame attuale
+					{
+						DetectObject(i,j,andCampioni);
 						status = true; 
+					}
 				}
 			}
 		}
@@ -67,10 +72,9 @@ bool findObjectsInLine(IplImage * andCampioni, IplImage * lineMask, IplImage * r
 	return status;
 }
 
-bool AroundExcitation(IplImage * img, int row, int column, int dimension, int active_points[EXCITED_POINTS][2], int numPunti, char type) 
+bool AroundExcitation(int row, int column, int dimension, int active_points[EXCITED_POINTS][2], int numPunti, char type) 
 {
 	bool excitation = 0;
-	int ws = img->widthStep;		// magari non conviene farla come funzione nuova ma inglobarla?
 	for(int c = 0; c < numPunti; c++)
 	{
 		for (int i = 0 - dimension; i < dimension; i++)
@@ -100,6 +104,44 @@ bool AroundExcitation(IplImage * img, int row, int column, int dimension, int ac
 	return excitation;
 }
 
+int DetectObject(int row, int column, IplImage *inputImage)
+{
+	IplImage *object;
+	CvSize size;
+	size.height = inputImage->height;
+	size.width = inputImage->width;
+	object = cvCreateImage(size,IPL_DEPTH_8U,1);
+	cvSetZero(object);
+	//ora troviamo i punti connessi
+	object->imageData[(row)*size.width + column] = 255;
+	countertemporaneo = 0;
+	Search(row, column, size.height, size.width, inputImage, object);
+	cvNamedWindow("Object");
+	displayImage(object, "Object");
+	cvWaitKey(10);
+	return 0;
+}
+
+
+void Search(int rowIndex, int columnIndex, int height, int width, IplImage * input, IplImage * output)
+{	
+	for(int i = -RAGGIO_RICERCA; i <= RAGGIO_RICERCA; i++)
+	{
+		for(int j = -RAGGIO_RICERCA; j <= RAGGIO_RICERCA; j++)
+		{
+			if((i+rowIndex) < (height-1) && (j+columnIndex) < (width-1)) 
+				if(input->imageData[(rowIndex+i)*width + columnIndex + j] != 0 && output->imageData[(rowIndex+i)*width + columnIndex + j] == 0)
+				{
+					output->imageData[(rowIndex+i)*width + columnIndex + j] = 255;
+					countertemporaneo++;
+					Search(rowIndex+i, columnIndex+j, height, width, input, output);
+				}
+		}
+	}
+}
+
+
+
 void destroyArrayCampioni(ArrayCampioni * c)
 {
 	for (int i = 0; i < NUMERO_CAMPIONI; i++)
@@ -109,12 +151,10 @@ void destroyArrayCampioni(ArrayCampioni * c)
 		cvReleaseImage(&(c->andCampioni));
 }
 
-void displayLineStatus(IplImage * line, char * winName)
+
+void displayImage(IplImage * image, char * winName)
 {
-	//cvDilate(line,line,NULL,13); //questa dilate andrà poi fatta nell'immagine in cui cerchiamo i blob, non solo nella linea!
-	cvResizeWindow(winName,line->width,line->height);
-	cvShowImage(winName, line);
-	cvWaitKey(5);  //qui fermiamo tutto per 5ms!!!!! magari andrà tolto ma serve per visualizzare subito l'immagine durante il debug
+	cvResizeWindow(winName,image->width,image->height);
+	cvShowImage(winName, image);
+	//cvWaitKey(5);  //qui fermiamo tutto per 5ms!!!!! magari andrà tolto ma serve per visualizzare subito l'immagine durante il debug
 }
-
-

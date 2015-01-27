@@ -36,13 +36,13 @@ struct lineaTrapasso
 
 int open_avi(AVI_READER *);
 char * get_next_frame();
-int display_image(int delay);
 int close_avi();
 void release();
 void elab(IplImage* inputImage);
 void onMouseClick(int event, int x, int y, int flags, void* p);
 IplImage * CreaMaschera(CvSize size, lineaTrapasso puntilinea);
 void DisegnaLineaTrapasso(lineaTrapasso puntilinea);
+void displayImage(IplImage * line, char * winName);
 
 CvCapture* cap=0;
 
@@ -103,7 +103,7 @@ int main(int argc, char** argv)
 	}
 	//Mostriamo la maschera contenente la linea di trapasso
 	cvSetMouseCallback(filename, onMouseClick, &puntilinea);
-	display_image(1);
+	displayImage(avi.frame,win);
 
 	while(via==0)
 	{
@@ -132,9 +132,11 @@ int main(int argc, char** argv)
 		addCampione(frame_diff, &campioni);
 		if(frame_number>1)
 			puntilinea.stato = findObjectsInLine((&campioni)->andCampioni, maschera, linea, excited_points, &num_excited_points);  //And con la maschera e mette il risultato in linea (Non ha molto senso chiamare linea questa immagine!!)
-		displayLineStatus(linea, "Line"); //visualizza i pixel eccitati della linea
+		displayImage((&campioni)->andCampioni, "Line"); //visualizza i pixel eccitati della linea
 		DisegnaLineaTrapasso(puntilinea);
-		retcode=(char)(display_image(5));
+		displayImage(avi.frame,win);
+		retcode = (char)cvWaitKey(10);
+		//retcode=(char)(display_image(5));
 		frame_number++;
 	}
 
@@ -246,12 +248,6 @@ char * get_next_frame()
 	return imag;
 }
 
-int display_image(int delay)
-{
-	cvResizeWindow(win,avi.frame->width,avi.frame->height);
-	cvShowImage(win, avi.frame);
-	return cvWaitKey(delay);
-}
 
 int close_avi()
 {
