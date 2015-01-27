@@ -30,7 +30,8 @@ bool findObjectsInLine(IplImage * andCampioni, IplImage * lineMask, IplImage * r
 bool AroundExcitation(int row, int column, int dimension, int active_points[EXCITED_POINTS][2], int numPunti, char type);
 void displayImage(IplImage * image, char * winName);
 int DetectObject(int row, int column, IplImage *inputImage);
-void Search(int rowIndex, int columnIndex, int height, int width, IplImage * input, IplImage * output);
+//void Search(int rowIndex, int columnIndex, int height, int width, IplImage * input, IplImage * output);
+void SeedResearch(int startRow, int startCol, int height, int width, IplImage * input, IplImage * output);
 
 
 #endif /* FUNZIONILINEA_H_ */
