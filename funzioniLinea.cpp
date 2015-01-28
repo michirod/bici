@@ -90,6 +90,7 @@ bool AroundExcitation(int row, int column, int dimension, int active_points[EXCI
 int DetectObject(int row, int column, IplImage *inputImage, lineaTrapasso puntilinea)
 {
 	IplImage *object;
+	int ObjectIdentifier = 0;
 	CvSize size;
 	size.height = inputImage->height;
 	size.width = inputImage->width;
@@ -101,12 +102,12 @@ int DetectObject(int row, int column, IplImage *inputImage, lineaTrapasso puntil
 	//Search(row, column, size.height, size.width, inputImage, object);
 	SeedResearch(row, column, size.height, size.width, inputImage, object);
 	
-	AnalyzeObject(object, size.height, size.width, puntilinea);
+	ObjectIdentifier = AnalyzeObject(object, size.height, size.width, puntilinea);
 
 	cvNamedWindow("Object");
 	displayImage(object, "Object");
 	cvWaitKey(10);
-	return 0;
+	return ObjectIdentifier;
 }
 
 
