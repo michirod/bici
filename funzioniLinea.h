@@ -39,6 +39,6 @@ void displayImage(IplImage * image, char * winName);
 int DetectObject(int row, int column, IplImage *inputImage, lineaTrapasso puntilinea);
 //void Search(int rowIndex, int columnIndex, int height, int width, IplImage * input, IplImage * output);
 void SeedResearch(int startRow, int startCol, int height, int width, IplImage * input, IplImage * output);
-void AnalyzeObject(IplImage *OBJ, int height, int width, lineaTrapasso puntilinea);
+int AnalyzeObject(IplImage *OBJ, int height, int width, lineaTrapasso puntilinea);
 
 #endif /* FUNZIONILINEA_H_ */

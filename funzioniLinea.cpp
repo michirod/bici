@@ -164,7 +164,7 @@ void SeedResearch(int startRow, int startCol, int height, int width, IplImage * 
 	}
 }*/
 
-void AnalyzeObject(IplImage *OBJ, int height, int width, lineaTrapasso puntilinea)   //facciamo anche estrarre il perimetro e lo sostituiamo all'oggetto completo
+int AnalyzeObject(IplImage *OBJ, int height, int width, lineaTrapasso puntilinea)   //facciamo anche estrarre il perimetro e lo sostituiamo all'oggetto completo
 {
 	int Area=0, Perimeter=0, BaryRow=0, BaryCol=0;
 	bool flagPer;
@@ -199,12 +199,16 @@ void AnalyzeObject(IplImage *OBJ, int height, int width, lineaTrapasso puntiline
 	cvCopyImage(OBJPer,OBJ);
 	BaryRow = (int)(BaryRow/Area);		//Barycenter extraction
 	BaryCol = (int)(BaryCol/Area);
-	/*bParallel = 1;			//calcolo coefficienti non è necessario farlo ogni volta, si potrebbe spostare oppure farlo eseguire solo la prima volta
-	aParallel= (puntilinea.B.y - puntilinea.A.y)/(puntilinea.A.x - puntilinea.B.y)
-	puntilinea->A.x = x;
-	puntilinea->A.y = y;*/
-
+	bParallel = (float)1;			//calcolo coefficienti non è necessario farlo ogni volta, si potrebbe spostare oppure farlo eseguire solo la prima volta
+	aParallel = (float)(puntilinea.B.y - puntilinea.A.y)/(puntilinea.A.x - puntilinea.B.y);
+	aPerpendicular = -bParallel;
+	bPerpendicular = aParallel;
 	printf("\nArea: %d\nPerimeter: %d\nRow of barycenter: %d\nColumn of barycenter: %d",Area,Perimeter,BaryRow,BaryCol);
+	printf("\nA Parallel: %f\nB Parallel: %f\n\nA Perpendicular: %f\nB Perpendicular: %f\n",aParallel,bParallel,aPerpendicular,bPerpendicular);
+	if(Area>=1000 && Area<=1800)
+		return 1;
+	else 
+		return 0;
 }
 
 
