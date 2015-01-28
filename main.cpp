@@ -3,7 +3,7 @@
 Dunque, piccola nota, abbiamo due funzioni che fanno praticamente lo stesso (int display_image(int delay) e 
 void displayLineStatus(IplImage * line, char * winName))  --> da uniformare!
 
-Poi dobbiamo creare anche una struttura di un punto x,y (anche se credo esista già) e utilizzarla per creare le altre strutture perchè
+Poi dobbiamo creare anche una struttura di un punto x,y (anche se credo esista giï¿½) e utilizzarla per creare le altre strutture perchï¿½
 io sto utilizzando array bidimensionali per lavorare coi punti al momento
 
 */
@@ -17,6 +17,7 @@ io sto utilizzando array bidimensionali per lavorare coi punti al momento
 #include <iomanip>
 #include <math.h>
 #include "funzioniLinea.h"
+#include "bgSubtraction.h"
 
 
 // variables for acquisition from file
@@ -74,6 +75,8 @@ int main(int argc, char** argv)
 	int excited_points[EXCITED_POINTS][2];	//da sistemare, magari mettiamo un arrai di strutture punti
 	int num_excited_points=0;
 	CvSize size;
+	CvMemStorage *storage = cvCreateMemStorage(0);
+	CvSeq *contours = cvCreateSeq(0, sizeof(CvSeq), sizeof(CvPoint), storage);
 
 	frame_number=0;
 	for(int i = 0; i < EXCITED_POINTS; i++)
@@ -116,10 +119,11 @@ int main(int argc, char** argv)
 	maschera = CreaMaschera(size, puntilinea);
 	linea = cvCreateImage(size, IPL_DEPTH_8U,1);
 	initArrayCampioni(&campioni, size);
-	cvNamedWindow("Line");
+	//cvNamedWindow("Line");
+	createBg(avi.frame);
 
 	printf("Insert threshold value : ");
-	res=scanf("%d",&th);
+	//res=scanf("%d",&th);
 
 	if(res==1)
 		thresh=(double)th;
@@ -128,13 +132,17 @@ int main(int argc, char** argv)
 
 	while((im=get_next_frame())!=0 && retcode!='q')
 	{
-		elab(avi.frame);
+		//elab(avi.frame);
+		bgSub(avi.frame, &frame_diff);
+		cvFindContours(frame_diff, storage, &contours, sizeof(CvContour), CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE, cvPoint(0,0));
+	    cvDrawContours(avi.frame, contours, CV_RGB(0,255,0), CV_RGB(0,0,255), 2, 1, 8, cvPoint(0, 0));
+
 		addCampione(frame_diff, &campioni);
 		if(frame_number>1)
 			puntilinea.stato = findObjectsInLine((&campioni)->andCampioni, maschera, linea, excited_points, &num_excited_points);  //And con la maschera e mette il risultato in linea (Non ha molto senso chiamare linea questa immagine!!)
-		displayLineStatus(linea, "Line"); //visualizza i pixel eccitati della linea
+		//displayLineStatus(linea, "Line"); //visualizza i pixel eccitati della linea
 		DisegnaLineaTrapasso(puntilinea);
-		retcode=(char)(display_image(5));
+		retcode=(char)(display_image(1));
 		frame_number++;
 	}
 
@@ -294,7 +302,7 @@ IplImage * CreaMaschera(CvSize in_size, lineaTrapasso puntilinea)
 	//Visualize
 	cvResizeWindow(win,result->width,result->height);
 	cvShowImage(win, result);
-	cvWaitKey(10);
+	//cvWaitKey(0);
 	return result;
 }
 
