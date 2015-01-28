@@ -3,7 +3,7 @@
 Dunque, piccola nota, abbiamo due funzioni che fanno praticamente lo stesso (int display_image(int delay) e 
 void displayLineStatus(IplImage * line, char * winName))  --> da uniformare!
 
-Poi dobbiamo creare anche una struttura di un punto x,y (anche se credo esista già) e utilizzarla per creare le altre strutture perchè
+Poi dobbiamo creare anche una struttura di un punto x,y (anche se credo esista giï¿½) e utilizzarla per creare le altre strutture perchï¿½
 io sto utilizzando array bidimensionali per lavorare coi punti al momento
 
 */
@@ -65,11 +65,15 @@ int main(int argc, char** argv)
 	char retcode=-1;
 	IplImage * maschera;
 	IplImage * linea;
-	lineaTrapasso puntilinea;	//conterrà i punti con cui costruiamo la linea di trapasso
+	lineaTrapasso puntilinea;	//conterrï¿½ i punti con cui costruiamo la linea di trapasso
 	ArrayCampioni campioni;		//CAMPIONI DI IMMAGINE, MAGARI SISTEMIAMO IL NOME DELLA STRUTTURA
 	int excited_points[EXCITED_POINTS][2];	//da sistemare, magari mettiamo un arrai di strutture punti
 	int num_excited_points=0;
 	CvSize size;
+	int contatoreBici = 0;
+	char contatoreStringa[100];
+	CvPoint contatorePoint;
+	CvFont contatoreFont;
 
 	frame_number=0;
 	for(int i = 0; i < EXCITED_POINTS; i++)
@@ -113,6 +117,8 @@ int main(int argc, char** argv)
 	linea = cvCreateImage(size, IPL_DEPTH_8U,1);
 	initArrayCampioni(&campioni, size);
 	cvNamedWindow("Line");
+	contatorePoint = cvPoint(10, 50);
+	cvInitFont(&contatoreFont, CV_FONT_HERSHEY_SIMPLEX, 1, 1, 0, 3);
 
 	printf("Insert threshold value : ");
 	res=scanf("%d",&th);
@@ -127,9 +133,11 @@ int main(int argc, char** argv)
 		elab(avi.frame);
 		addCampione(frame_diff, &campioni);
 		if(frame_number>1)
-			puntilinea.stato = findObjectsInLine((&campioni)->andCampioni, maschera, linea, excited_points, &num_excited_points, puntilinea);  //And con la maschera e mette il risultato in linea (Non ha molto senso chiamare linea questa immagine!!)
+			contatoreBici += findObjectsInLine((&campioni)->andCampioni, maschera, linea, excited_points, &num_excited_points, puntilinea);  //And con la maschera e mette il risultato in linea (Non ha molto senso chiamare linea questa immagine!!)
 		displayImage((&campioni)->andCampioni, "Line"); //visualizza i pixel eccitati della linea
 		DisegnaLineaTrapasso(puntilinea);
+		sprintf(contatoreStringa, "Bicycles passed: %d", contatoreBici);
+		cvPutText(avi.frame, contatoreStringa, contatorePoint, &contatoreFont, cvScalar(255, 0 ,0));
 		displayImage(avi.frame,win);
 		retcode = (char)cvWaitKey(10);
 		//retcode=(char)(display_image(5));
