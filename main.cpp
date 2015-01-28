@@ -26,12 +26,7 @@ typedef struct
 	IplImage* frame;
 } AVI_READER;	
 
-struct lineaTrapasso 
-{
-	lineaTrapasso() : A(cvPoint(-1,-1)), B(cvPoint(-1,-1)), stato(0) {};
-	CvPoint A, B;
-	bool stato;
-};
+
 
 
 int open_avi(AVI_READER *);
@@ -57,6 +52,7 @@ IplImage* ipl=0;
 AVI_READER avi;
 
 
+
 double  thresh=13.0;
 int frame_number;
 
@@ -69,7 +65,7 @@ int main(int argc, char** argv)
 	char retcode=-1;
 	IplImage * maschera;
 	IplImage * linea;
-	lineaTrapasso puntilinea;
+	lineaTrapasso puntilinea;	//conterrà i punti con cui costruiamo la linea di trapasso
 	ArrayCampioni campioni;		//CAMPIONI DI IMMAGINE, MAGARI SISTEMIAMO IL NOME DELLA STRUTTURA
 	int excited_points[EXCITED_POINTS][2];	//da sistemare, magari mettiamo un arrai di strutture punti
 	int num_excited_points=0;
@@ -131,7 +127,7 @@ int main(int argc, char** argv)
 		elab(avi.frame);
 		addCampione(frame_diff, &campioni);
 		if(frame_number>1)
-			puntilinea.stato = findObjectsInLine((&campioni)->andCampioni, maschera, linea, excited_points, &num_excited_points);  //And con la maschera e mette il risultato in linea (Non ha molto senso chiamare linea questa immagine!!)
+			puntilinea.stato = findObjectsInLine((&campioni)->andCampioni, maschera, linea, excited_points, &num_excited_points, puntilinea);  //And con la maschera e mette il risultato in linea (Non ha molto senso chiamare linea questa immagine!!)
 		displayImage((&campioni)->andCampioni, "Line"); //visualizza i pixel eccitati della linea
 		DisegnaLineaTrapasso(puntilinea);
 		displayImage(avi.frame,win);

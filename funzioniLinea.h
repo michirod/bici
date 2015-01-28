@@ -22,16 +22,23 @@ typedef struct
 	int indiceListaCampioni;
 } ArrayCampioni;
 
+struct lineaTrapasso 
+{
+	lineaTrapasso() : A(cvPoint(-1,-1)), B(cvPoint(-1,-1)), stato(0) {};
+	CvPoint A, B;
+	bool stato;
+};
+
 void initArrayCampioni(ArrayCampioni * c, CvSize size);
 void addCampione(IplImage * img, ArrayCampioni * campioni);
 IplImage * ANDiamo(ArrayCampioni * c);
 void destroyArrayCampioni(ArrayCampioni * c);
-bool findObjectsInLine(IplImage * andCampioni, IplImage * lineMask, IplImage * result, int active_points[EXCITED_POINTS][2], int *num_active_points);
+int findObjectsInLine(IplImage * andCampioni, IplImage * lineMask, IplImage * result, int active_points[EXCITED_POINTS][2], int *num_active_points, lineaTrapasso puntilinea);
 bool AroundExcitation(int row, int column, int dimension, int active_points[EXCITED_POINTS][2], int numPunti, char type);
 void displayImage(IplImage * image, char * winName);
-int DetectObject(int row, int column, IplImage *inputImage);
+int DetectObject(int row, int column, IplImage *inputImage, lineaTrapasso puntilinea);
 //void Search(int rowIndex, int columnIndex, int height, int width, IplImage * input, IplImage * output);
 void SeedResearch(int startRow, int startCol, int height, int width, IplImage * input, IplImage * output);
-
+void AnalyzeObject(IplImage *OBJ, int height, int width, lineaTrapasso puntilinea);
 
 #endif /* FUNZIONILINEA_H_ */
