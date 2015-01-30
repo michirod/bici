@@ -167,9 +167,10 @@ void SeedResearch(int startRow, int startCol, int height, int width, IplImage * 
 
 int AnalyzeObject(IplImage *OBJ, int height, int width, lineaTrapasso puntilinea)   //facciamo anche estrarre il perimetro e lo sostituiamo all'oggetto completo
 {
-	int Area=0, Perimeter=0, BaryRow=0, BaryCol=0;
+	int Area=0, Perimeter=0, BaryRow=0, BaryCol=0, negLarg, posLarg, negLung, posLung, temp;
 	bool flagPer;
-	float aParallel, bParallel, aPerpendicular, bPerpendicular;
+	float aParallel, bParallel, cParallel, aPerpendicular, bPerpendicular, cPerpendicular, DenParallel, DenPerpendicular, cl1, cl2, cw1, cw2, floatemp;
+	CvPoint interSup, interInf, interLeft, interRight, boundL1, boundL2, boundW1, boundW2, CornTop, CornBottom, CornLeft, CornRight;
 	IplImage *OBJPer;
 	CvSize size;
 	size.height = OBJ->height;
@@ -197,16 +198,102 @@ int AnalyzeObject(IplImage *OBJ, int height, int width, lineaTrapasso puntilinea
 						}
 			}
 		}
-	cvCopyImage(OBJPer,OBJ);
+	
 	BaryRow = (int)(BaryRow/Area);		//Barycenter extraction
 	BaryCol = (int)(BaryCol/Area);
+	
 	bParallel = (float)1;			//calcolo coefficienti non è necessario farlo ogni volta, si potrebbe spostare oppure farlo eseguire solo la prima volta
-	aParallel = (float)(puntilinea.B.y - puntilinea.A.y)/(puntilinea.A.x - puntilinea.B.y);
-	aPerpendicular = -bParallel;
-	bPerpendicular = aParallel;
+	aParallel = (float)(puntilinea.B.y - puntilinea.A.y)/(puntilinea.A.x - puntilinea.B.x);
+	cParallel = -aParallel*BaryCol - bParallel*BaryRow;
+	temp = aParallel*BaryCol + bParallel*BaryRow + cParallel;
+	aPerpendicular = bParallel;
+	bPerpendicular = -aParallel;
+	cPerpendicular = -aPerpendicular*BaryCol - bPerpendicular*BaryRow;
+	
+	//calcolo intersezioni asse parallelo con limiti superiore immagine
+	interSup.y = 0;
+	interSup.x = -cPerpendicular/aPerpendicular;
+	interInf.y = height;
+	interInf.x = - (bPerpendicular*interInf.y+cPerpendicular)/aPerpendicular;
+	interLeft.y = - cParallel/bParallel;
+	interLeft.x = - (bParallel*interLeft.y+cParallel)/aParallel;
+	interRight.y = - (cParallel + width*aParallel)/bParallel;
+	interRight.x = - (bParallel*interRight.y+cParallel)/aParallel;
+	
+	//troviamo i punti alla massima distanza dalle linee incrocianti nel baricentro
+	DenParallel = sqrt(aParallel*aParallel+bParallel*bParallel);
+	DenPerpendicular = sqrt(aPerpendicular*aPerpendicular+bPerpendicular*bPerpendicular);
+	negLung = 1000;
+	posLung = -1000;
+	negLarg = 1000;
+	posLarg = -1000;
+	for(int i=0;i<height;i++)
+		for(int j=0; j<width;j++)
+			if(OBJPer->imageData[i*width+j] != 0)
+			{
+				temp = (int)(aPerpendicular*j+bPerpendicular*i+cPerpendicular);
+				if(temp > posLarg)
+				{
+					posLarg = temp;
+					boundL2.x = j;
+					boundL2.y = i;
+				}
+				if(temp < negLarg)
+				{
+					negLarg = temp;
+					boundL1.x = j;
+					boundL1.y = i;
+				}
+				temp = (int)(aParallel*j+bParallel*i+cParallel);
+				if(temp > posLung)
+				{
+					posLung = temp;
+					boundW2.x = j;
+					boundW2.y = i;
+				}
+				if(temp < negLung)
+				{
+					negLung = temp;
+					boundW1.x = j;
+					boundW1.y = i;
+				}
+			}
+	posLung = posLung / DenPerpendicular;
+	negLung = negLung / DenPerpendicular;
+	posLarg = posLarg / DenParallel;
+	negLarg = negLarg / DenParallel;
+	//troviamo i punti agli angoli della bounding box
+	cl1 = -(aPerpendicular*boundL1.x+bPerpendicular*boundL1.y);
+	cl2 = -(aPerpendicular*boundL2.x+bPerpendicular*boundL2.y);
+	cw1 = -(aParallel*boundW1.x+bParallel*boundW1.y);
+	cw2 = -(aParallel*boundW2.x+bParallel*boundW2.y);
+
+	floatemp = (aPerpendicular*bParallel - bPerpendicular*aParallel);
+	CornTop.x = (int)((bPerpendicular*cw1 - bParallel*cl1)/floatemp);
+	CornTop.y = (int)((aParallel*cl1 - aPerpendicular*cw1)/floatemp);
+	CornBottom.x = (int)((bPerpendicular*cw2 - bParallel*cl2)/floatemp);
+	CornBottom.y = (int)((aParallel*cl2 - aPerpendicular*cw2)/floatemp);
+	CornLeft.x = (int)((bPerpendicular*cw2 - bParallel*cl1)/floatemp);
+	CornLeft.y = (int)((aParallel*cl1 - aPerpendicular*cw2)/floatemp);
+	CornRight.x = (int)((bPerpendicular*cw1 - bParallel*cl2)/floatemp);
+	CornRight.y = (int)((aParallel*cl2 - aPerpendicular*cw1)/floatemp);
+
+	//disegno linee parallele e perpendicolare alla linea di trapasso passanti per il baricentro
+	cvLine(OBJPer,interSup,interInf,CV_RGB(255, 255, 255),1,8,0);
+	cvLine(OBJPer,interLeft,interRight,CV_RGB(255, 255, 255),1,8,0);
+
+	//disegnamo la bounding box
+	cvLine(OBJPer,CornTop,CornLeft,CV_RGB(255, 255, 255),1,8,0);
+	cvLine(OBJPer,CornLeft,CornBottom,CV_RGB(255, 255, 255),1,8,0);
+	cvLine(OBJPer,CornBottom,CornRight,CV_RGB(255, 255, 255),1,8,0);
+	cvLine(OBJPer,CornRight,CornTop,CV_RGB(255, 255, 255),1,8,0);
+
+	//calcolo larghezza e lunghezza rispetto alla perpendicolare e parallela
 	printf("\nArea: %d\nPerimeter: %d\nRow of barycenter: %d\nColumn of barycenter: %d",Area,Perimeter,BaryRow,BaryCol);
-	printf("\nA Parallel: %f\nB Parallel: %f\n\nA Perpendicular: %f\nB Perpendicular: %f\n",aParallel,bParallel,aPerpendicular,bPerpendicular);
-	if(Area>=1000 && Area<=1800)
+	printf("\nA Parallel: %f\nB Parallel: %f\nC Parallel: %f\n\nA Perpendicular: %f\nB Perpendicular: %f\nC Perpendicular: %f\n",aParallel,bParallel,cParallel,aPerpendicular,bPerpendicular,cPerpendicular);
+	
+	cvCopyImage(OBJPer,OBJ);
+	if(Area>=1000 && Area<=1800)		//parametri temporanei
 		return 1;
 	else 
 		return 0;
