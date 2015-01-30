@@ -167,9 +167,9 @@ void SeedResearch(int startRow, int startCol, int height, int width, IplImage * 
 
 int AnalyzeObject(IplImage *OBJ, int height, int width, lineaTrapasso puntilinea)   //facciamo anche estrarre il perimetro e lo sostituiamo all'oggetto completo
 {
-	int Area=0, Perimeter=0, BaryRow=0, BaryCol=0, negLarg, posLarg, negLung, posLung, temp;
+	int Area=0, Perimeter=0, BaryRow=0, BaryCol=0, negLarg, posLarg, negLung, posLung, temp, Larghezza, Lunghezza, Compactness;
 	bool flagPer;
-	float aParallel, bParallel, cParallel, aPerpendicular, bPerpendicular, cPerpendicular, DenParallel, DenPerpendicular, cl1, cl2, cw1, cw2, floatemp;
+	float aParallel, bParallel, cParallel, aPerpendicular, bPerpendicular, cPerpendicular, DenParallel, DenPerpendicular, cl1, cl2, cw1, cw2, floatemp, FactorForm;
 	CvPoint interSup, interInf, interLeft, interRight, boundL1, boundL2, boundW1, boundW2, CornTop, CornBottom, CornLeft, CornRight;
 	IplImage *OBJPer;
 	CvSize size;
@@ -258,10 +258,11 @@ int AnalyzeObject(IplImage *OBJ, int height, int width, lineaTrapasso puntilinea
 					boundW1.y = i;
 				}
 			}
-	posLung = posLung / DenPerpendicular;
-	negLung = negLung / DenPerpendicular;
-	posLarg = posLarg / DenParallel;
-	negLarg = negLarg / DenParallel;
+	Lunghezza = (posLung - negLung) / DenPerpendicular;
+	Larghezza= (posLarg - negLarg) / DenParallel;
+	FactorForm = (float)Lunghezza/Larghezza;
+	Compactness = (int)((Perimeter*Perimeter) / Area);
+
 	//troviamo i punti agli angoli della bounding box
 	cl1 = -(aPerpendicular*boundL1.x+bPerpendicular*boundL1.y);
 	cl2 = -(aPerpendicular*boundL2.x+bPerpendicular*boundL2.y);
@@ -293,10 +294,15 @@ int AnalyzeObject(IplImage *OBJ, int height, int width, lineaTrapasso puntilinea
 	printf("\nA Parallel: %f\nB Parallel: %f\nC Parallel: %f\n\nA Perpendicular: %f\nB Perpendicular: %f\nC Perpendicular: %f\n",aParallel,bParallel,cParallel,aPerpendicular,bPerpendicular,cPerpendicular);
 	
 	cvCopyImage(OBJPer,OBJ);
-	if(Area>=1000 && Area<=1800)		//parametri temporanei
-		return 1;
-	else 
-		return 0;
+
+	if(Area>=900 && Area<=1850)		//parametri temporanei
+	{
+		if(FactorForm > 1.65 && FactorForm < 2.45)
+			if(Compactness > 20 && Compactness < 50)
+				return 1;
+	}
+	
+	return 0;
 }
 
 
