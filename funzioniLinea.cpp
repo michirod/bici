@@ -39,6 +39,7 @@ int findObjectsInLine(IplImage * andCampioni, IplImage * lineMask, IplImage * re
 	int actual_active_points[EXCITED_POINTS][2];
 	cvDilate(andCampioni,andCampioni,NULL,2);		//importante perchè anche se l'and è risultato di immagini già dilatate risulta essere molto ben definita e con apertureblabla
 	cvAnd(andCampioni, lineMask, result, NULL);
+	cvNamedWindow("Object");
 	for (int i = 0; i < result->height; i++)
 		for (int j = 0; j < result->width; j++)
 			if (result->imageData[i*ws + j] != 0)
@@ -103,10 +104,12 @@ int DetectObject(int row, int column, IplImage *inputImage, lineaTrapasso puntil
 	SeedResearch(row, column, size.height, size.width, inputImage, object);
 	
 	ObjectIdentifier = AnalyzeObject(object, size.height, size.width, puntilinea);
-
-	cvNamedWindow("Object");
-	displayImage(object, "Object");
-	cvWaitKey(10);
+	if(ObjectIdentifier == 1)
+	{
+		//cvNamedWindow("Object");
+		displayImage(object, "Object");
+		cvWaitKey(1);
+	}
 	return ObjectIdentifier;
 }
 

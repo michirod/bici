@@ -136,7 +136,7 @@ int main(int argc, char** argv)
 			contatoreBici += findObjectsInLine((&campioni)->andCampioni, maschera, linea, excited_points, &num_excited_points, puntilinea);  //And con la maschera e mette il risultato in linea (Non ha molto senso chiamare linea questa immagine!!)
 		displayImage((&campioni)->andCampioni, "Line"); //visualizza i pixel eccitati della linea
 		DisegnaLineaTrapasso(puntilinea);
-		sprintf(contatoreStringa, "Bicycles passed: %d", contatoreBici);
+		sprintf(contatoreStringa, "Bicycles: %d", contatoreBici);
 		cvPutText(avi.frame, contatoreStringa, contatorePoint, &contatoreFont, cvScalar(255, 0 ,0));
 		displayImage(avi.frame,win);
 		retcode = (char)cvWaitKey(10);
