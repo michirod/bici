@@ -72,7 +72,7 @@ bool AroundExcitation(int row, int column, int dimension, int active_points[EXCI
 		for (int i = 0 - dimension; i < dimension; i++)
 			for (int j = 0 - dimension; j < dimension; j++)
 				if((active_points[c][0] + i) == row && (active_points[c][1] + j) == column)
-					if(type == 1)
+					if(type == 1)	//actual
 					{
 						if(i != 0 || j != 0)
 						{
@@ -80,7 +80,7 @@ bool AroundExcitation(int row, int column, int dimension, int active_points[EXCI
 							return excitation;
 						}
 					}
-					else
+					else		//past
 					{
 						excitation = 1;
 						return excitation;
