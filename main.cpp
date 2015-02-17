@@ -77,6 +77,7 @@ int main(int argc, char** argv)
 	CvSize size;
 	CvMemStorage *storage = cvCreateMemStorage(0);
 	CvSeq *contours = cvCreateSeq(0, sizeof(CvSeq), sizeof(CvPoint), storage);
+	bool ready;
 
 	frame_number=0;
 	for(int i = 0; i < EXCITED_POINTS; i++)
@@ -120,7 +121,8 @@ int main(int argc, char** argv)
 	linea = cvCreateImage(size, IPL_DEPTH_8U,1);
 	initArrayCampioni(&campioni, size);
 	//cvNamedWindow("Line");
-	createBg(avi.frame);
+	initBg(avi.frame, 100, 1);
+	ready = false;
 
 	printf("Insert threshold value : ");
 	//res=scanf("%d",&th);
@@ -133,15 +135,18 @@ int main(int argc, char** argv)
 	while((im=get_next_frame())!=0 && retcode!='q')
 	{
 		//elab(avi.frame);
-		bgSub(avi.frame, &frame_diff);
-		cvFindContours(frame_diff, storage, &contours, sizeof(CvContour), CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE, cvPoint(0,0));
-	    cvDrawContours(avi.frame, contours, CV_RGB(0,255,0), CV_RGB(0,0,255), 2, 1, 8, cvPoint(0, 0));
+		ready = bgSub(avi.frame, &frame_diff);
+		if (ready)
+		{
+			cvFindContours(frame_diff, storage, &contours, sizeof(CvContour), CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE, cvPoint(0,0));
+			cvDrawContours(avi.frame, contours, CV_RGB(0,255,0), CV_RGB(0,0,255), 2, 1, 8, cvPoint(0, 0));
 
-		addCampione(frame_diff, &campioni);
-		if(frame_number>1)
-			puntilinea.stato = findObjectsInLine((&campioni)->andCampioni, maschera, linea, excited_points, &num_excited_points);  //And con la maschera e mette il risultato in linea (Non ha molto senso chiamare linea questa immagine!!)
-		//displayLineStatus(linea, "Line"); //visualizza i pixel eccitati della linea
-		DisegnaLineaTrapasso(puntilinea);
+			addCampione(frame_diff, &campioni);
+			if(frame_number>1)
+				puntilinea.stato = findObjectsInLine((&campioni)->andCampioni, maschera, linea, excited_points, &num_excited_points);  //And con la maschera e mette il risultato in linea (Non ha molto senso chiamare linea questa immagine!!)
+			//displayLineStatus(linea, "Line"); //visualizza i pixel eccitati della linea
+			DisegnaLineaTrapasso(puntilinea);
+		}
 		retcode=(char)(display_image(1));
 		frame_number++;
 	}
