@@ -32,10 +32,31 @@ typedef struct
 	int matHeight;
 	int matWidth;
 } BgHisto;
+typedef struct
+{
+	PixelHisto ** mat;
+	int matHeight;
+	int matWidth;
+} BgGrayHisto;
 
+typedef struct
+{
+	int count;
+	double val;
+} PixelAverage;
+typedef struct
+{
+	PixelAverage ** mat;
+	int matHeight;
+	int matWidth;
+} BgAverage;
 
-void initBg(IplImage * img, int numInit, double a);
+void initBg(IplImage * img, int numInit, double a, double thres);
+void initBgGray(IplImage * img, int numInit, double a, double thres);
+void destroyBgInitStructures();
+void destroyBgGrayInitStructures();
 void createBg(IplImage * img);
+void createBgGray(IplImage *img);
 bool bgSub(IplImage * img, IplImage ** foreground);
 void cleanMask(IplImage * fgMask);
 unsigned char calcolaModa(PixelHisto histo);

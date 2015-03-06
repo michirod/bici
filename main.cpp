@@ -58,7 +58,7 @@ IplImage* ipl=0;
 AVI_READER avi;
 
 
-double  thresh=13.0;
+double  thresh=17.0;
 int frame_number;
 
 int main(int argc, char** argv)
@@ -91,6 +91,7 @@ int main(int argc, char** argv)
 	printf("Insert file name : ");
 	scanf("%s",filename);*/
 	sprintf(filename,"./Video/AO1.avi");
+	th = thresh;
 	
 	while(res!=1)
 	{
@@ -121,7 +122,8 @@ int main(int argc, char** argv)
 	linea = cvCreateImage(size, IPL_DEPTH_8U,1);
 	initArrayCampioni(&campioni, size);
 	//cvNamedWindow("Line");
-	initBg(avi.frame, 100, 1);
+	//initBg(avi.frame, 25, 0.8, thresh);
+	initBgGray(avi.frame, 1, 0.95, 20);
 	ready = false;
 
 	printf("Insert threshold value : ");
@@ -138,12 +140,12 @@ int main(int argc, char** argv)
 		ready = bgSub(avi.frame, &frame_diff);
 		if (ready)
 		{
-			cvFindContours(frame_diff, storage, &contours, sizeof(CvContour), CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE, cvPoint(0,0));
-			cvDrawContours(avi.frame, contours, CV_RGB(0,255,0), CV_RGB(0,0,255), 2, 1, 8, cvPoint(0, 0));
+			//cvFindContours(frame_diff, storage, &contours, sizeof(CvContour), CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE, cvPoint(0,0));
+			//cvDrawContours(avi.frame, contours, CV_RGB(0,255,0), CV_RGB(0,0,255), 2, 1, 8, cvPoint(0, 0));
 
 			addCampione(frame_diff, &campioni);
 			if(frame_number>1)
-				puntilinea.stato = findObjectsInLine((&campioni)->andCampioni, maschera, linea, excited_points, &num_excited_points);  //And con la maschera e mette il risultato in linea (Non ha molto senso chiamare linea questa immagine!!)
+				//puntilinea.stato = findObjectsInLine((&campioni)->andCampioni, maschera, linea, excited_points, &num_excited_points);  //And con la maschera e mette il risultato in linea (Non ha molto senso chiamare linea questa immagine!!)
 			//displayLineStatus(linea, "Line"); //visualizza i pixel eccitati della linea
 			DisegnaLineaTrapasso(puntilinea);
 		}
@@ -294,6 +296,7 @@ void onMouseClick(int event, int x, int y, int flags, void* p)
 			puntilinea->B.y = y;
 			via = 1;
 		}
+	printf("Clicked point (x,y) = (%d,%d)\n", x,y);
 	}
 }
 
