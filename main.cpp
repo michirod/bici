@@ -7,7 +7,7 @@ Poi dobbiamo creare anche una struttura di un punto x,y (anche se credo esista g
 io sto utilizzando array bidimensionali per lavorare coi punti al momento
 
 */
-
+#define BG_SUB
 
 #include <stdio.h>
 #include "opencv/cv.h"
@@ -17,6 +17,7 @@ io sto utilizzando array bidimensionali per lavorare coi punti al momento
 #include <iomanip>
 #include <math.h>
 #include "funzioniLinea.h"
+#include "bgSubtraction.h"
 
 
 // variables for acquisition from file
@@ -120,6 +121,10 @@ int main(int argc, char** argv)
 	contatorePoint = cvPoint(10, 50);
 	cvInitFont(&contatoreFont, CV_FONT_HERSHEY_SIMPLEX, 1, 1, 0, 3);
 
+#ifdef BG_SUB
+		initBgGray(avi.frame, 100, 0.95, 15);
+#endif
+
 	printf("Insert threshold value : ");
 	res=scanf("%d",&th);
 
@@ -130,15 +135,23 @@ int main(int argc, char** argv)
 
 	while((im=get_next_frame())!=0 && retcode!='q')
 	{
+
+#ifdef BG_SUB
+		if (bgSub(avi.frame, &frame_diff))
+#else
 		elab(avi.frame);
-		addCampione(frame_diff, &campioni);
-		if(frame_number>1)
-			contatoreBici += findObjectsInLine((&campioni)->andCampioni, maschera, linea, excited_points, &num_excited_points, puntilinea);  //And con la maschera e mette il risultato in linea (Non ha molto senso chiamare linea questa immagine!!)
-		displayImage((&campioni)->andCampioni, "Line"); //visualizza i pixel eccitati della linea
-		DisegnaLineaTrapasso(puntilinea);
-		sprintf(contatoreStringa, "Bicycles: %d", contatoreBici);
-		cvPutText(avi.frame, contatoreStringa, contatorePoint, &contatoreFont, cvScalar(255, 0 ,0));
-		displayImage(avi.frame,win);
+		if(true)
+#endif
+		{
+			addCampione(frame_diff, &campioni);
+			if(frame_number>1)
+				contatoreBici += findObjectsInLine((&campioni)->andCampioni, maschera, linea, excited_points, &num_excited_points, puntilinea);  //And con la maschera e mette il risultato in linea (Non ha molto senso chiamare linea questa immagine!!)
+			displayImage((&campioni)->andCampioni, "Line"); //visualizza i pixel eccitati della linea
+			DisegnaLineaTrapasso(puntilinea);
+			sprintf(contatoreStringa, "Bicycles: %d", contatoreBici);
+			cvPutText(avi.frame, contatoreStringa, contatorePoint, &contatoreFont, cvScalar(255, 0 ,0));
+			displayImage(avi.frame,win);
+		}
 		retcode = (char)cvWaitKey(10);
 		//retcode=(char)(display_image(5));
 		frame_number++;
@@ -281,6 +294,7 @@ void onMouseClick(int event, int x, int y, int flags, void* p)
 			puntilinea->B.y = y;
 			via = 1;
 		}
+	printf("Clicked point (x,y) = (%d,%d)\n", x,y);
 	}
 }
 
