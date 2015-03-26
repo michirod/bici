@@ -171,16 +171,25 @@ void createBg(IplImage * img)
 	cvMerge(bgR, bgG, bgB, NULL, bg);
 }
 
-void createBgGray(IplImage *img)
+void createBgGray(IplImage *img, IplImage *mask)
 {
 	cvCvtColor(img, Gray, CV_BGR2GRAY);
 	int ws = Gray->widthStep;
+	bool isMasked = mask != NULL;
 	for(int i = 0; i < Gray->height; i++)
 	{
 		for(int j = 0; j < Gray->width; j++)
 		{
-			unsigned char val =  Gray->imageData[i*ws + j];
-			bgGrayHisto.mat[j][i].val[val]++;
+			if (isMasked && mask->imageData[i*ws + j] == 0)
+			{
+				unsigned char val =  Gray->imageData[i*ws + j];
+				bgGrayHisto.mat[j][i].val[val]++;
+			}
+			else
+			{
+				unsigned char val =  Gray->imageData[i*ws + j];
+				bgGrayHisto.mat[j][i].val[val]++;
+			}
 		}
 	}
 	if (frameCount == numInitFrame - 1)
@@ -230,12 +239,13 @@ void updateBg(IplImage * img)
 		cvMerge(bgR, bgG, bgB, NULL, bg);
 }
 
-void updateBgGray(IplImage * img)
+void updateBgGray(IplImage * img, IplImage *mask)
 {
 	cvCvtColor(img, Gray, CV_BGR2GRAY);
 	int ws = Gray->widthStep;
 	int index;
 	int diff;
+	bool isMasked = mask != NULL;
 	for(int i = 0; i < img->height; i++)
 	{
 		for(int j = 0; j < img->width; j++)
@@ -268,51 +278,61 @@ void updateBgGray(IplImage * img)
 			}
 			if (i == 280 && j == 448)
 			{
-				printf ("Grayscale of pixel = %u || Grayscale of bg = %u\n", curVal, bgVal);
+				//printf ("Grayscale of pixel = %u || Grayscale of bg = %u\n", curVal, bgVal);
 			}
 
-			//if(abs(curVal - bgAverage.mat[j][i].last) < 3)
-			if(diff > th)
+			if (!isMasked || (isMasked && mask->imageData[index] == 0))
 			{
-				bgAverage.mat[j][i].bigCount++;
-				bgAverage.mat[j][i].bigAccumulator += curVal;
-				bgAverage.mat[j][i].last = curVal;
-				bgAverage.mat[j][i].littleCount = 0;
-				bgAverage.mat[j][i].littleAccumulator = 0;
-			}
-			else
-			{
-				if (bgAverage.mat[j][i].bigCount != 0)
+				//if(abs(curVal - bgAverage.mat[j][i].last) < 3)
+				if(diff > th)
 				{
-					if(abs(curVal - bgAverage.mat[j][i].last) < 3)
-						bgGray->imageData[index] = bgAverage.mat[j][i].last;
+					bgAverage.mat[j][i].bigCount++;
+					bgAverage.mat[j][i].bigAccumulator += curVal;
+					bgAverage.mat[j][i].last = curVal;
+					bgAverage.mat[j][i].littleCount = 0;
+					bgAverage.mat[j][i].littleAccumulator = 0;
 				}
 				else
 				{
-					bgAverage.mat[j][i].littleCount++;
-					bgAverage.mat[j][i].littleAccumulator += curVal;
-					bgAverage.mat[j][i].last = curVal;
-				}
+					if (bgAverage.mat[j][i].bigCount != 0)
+					{
+						if(abs(curVal - bgAverage.mat[j][i].last) < 3)
+							bgGray->imageData[index] = bgAverage.mat[j][i].last;
+					}
+					else
+					{
+						bgAverage.mat[j][i].littleCount++;
+						bgAverage.mat[j][i].littleAccumulator += curVal;
+						bgAverage.mat[j][i].last = curVal;
+					}
 					bgAverage.mat[j][i].bigCount = 0;
 					bgAverage.mat[j][i].bigAccumulator = 0;
+				}
+				if (bgAverage.mat[j][i].bigCount > 100)
+				{
+					bgAverage.mat[j][i].last = bgVal;
+					bgGray->imageData[index] = (char) (bgAverage.mat[j][i].bigAccumulator / bgAverage.mat[j][i].bigCount);
+					bgAverage.mat[j][i].bigCount = 0;
+					bgAverage.mat[j][i].bigAccumulator = 0;
+				}
+				if (bgAverage.mat[j][i].littleCount > 0)
+				{
+					bgGray->imageData[index] = (char) (bgAverage.mat[j][i].littleAccumulator / bgAverage.mat[j][i].littleCount);
+					//bgGray->imageData[index] = bgAverage.mat[j][i].last;
+					bgAverage.mat[j][i].littleCount = 0;
+					bgAverage.mat[j][i].littleAccumulator = 0;
+				}
+//				if (abs(curVal - bgAverage.mat[j][i].trueBg) < 2)
+//				{
+//					bgGray->imageData[index] = bgAverage.mat[j][i].trueBg;
+//					bgAverage.mat[j][i].littleCount = 0;
+//					bgAverage.mat[j][i].littleAccumulator = 0;
+//					bgAverage.mat[j][i].bigCount = 0;
+//					bgAverage.mat[j][i].bigAccumulator = 0;
+//				}
 			}
-			if (bgAverage.mat[j][i].bigCount > 200)
+			else
 			{
-				bgAverage.mat[j][i].last = bgVal;
-				bgGray->imageData[index] = (char) (bgAverage.mat[j][i].bigAccumulator / bgAverage.mat[j][i].bigCount);
-				bgAverage.mat[j][i].bigCount = 0;
-				bgAverage.mat[j][i].bigAccumulator = 0;
-			}
-			if (bgAverage.mat[j][i].littleCount > 0)
-			{
-				bgGray->imageData[index] = (char) (bgAverage.mat[j][i].littleAccumulator / bgAverage.mat[j][i].littleCount);
-				//bgGray->imageData[index] = bgAverage.mat[j][i].last;
-				bgAverage.mat[j][i].littleCount = 0;
-				bgAverage.mat[j][i].littleAccumulator = 0;
-			}
-			if (abs(curVal - bgAverage.mat[j][i].trueBg) < 2)
-			{
-				bgGray->imageData[index] = bgAverage.mat[j][i].trueBg;
 				bgAverage.mat[j][i].littleCount = 0;
 				bgAverage.mat[j][i].littleAccumulator = 0;
 				bgAverage.mat[j][i].bigCount = 0;
@@ -400,13 +420,13 @@ unsigned char calcolaModa(PixelHisto histo)
 	return maxI;
 }
 
-bool bgSub(IplImage * img, IplImage ** foreground)
+bool bgSub(IplImage * img, IplImage ** foreground, IplImage *mask)
 {
 	bool result;
 	if (frameCount < numInitFrame)
 	{
 		//createBg(img);
-		createBgGray(img);
+		createBgGray(img, mask);
 		char winName[] = "Background";
 		//display(winName, bg);
 		display(winName, bgGray);
@@ -418,7 +438,7 @@ bool bgSub(IplImage * img, IplImage ** foreground)
 			//destroyBgInitStructures();
 			//destroyBgGrayInitStructures();
 		//updateBg(img);
-		updateBgGray(img);
+		updateBgGray(img, mask);
 		//updateBgGrayModa(img);
 		char winName[] = "Background";
 		//display(winName, bg);

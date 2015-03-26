@@ -49,6 +49,7 @@ char via=0;
 IplImage *currentImageGray=0;
 IplImage *previous_frame=0;
 IplImage *frame_diff=0;
+IplImage *bg_diff=0;
 IplImage* ipl=0;
 AVI_READER avi;
 
@@ -125,8 +126,9 @@ int main(int argc, char** argv)
 		initBgGray(avi.frame, 100, 0.95, 15);
 #endif
 
-	printf("Insert threshold value : ");
-	res=scanf("%d",&th);
+	th = 3;
+	//printf("Insert threshold value : ");
+	//res=scanf("%d",&th);
 
 	if(res==1)
 		thresh=(double)th;
@@ -137,13 +139,18 @@ int main(int argc, char** argv)
 	{
 
 #ifdef BG_SUB
-		if (bgSub(avi.frame, &frame_diff))
+		elab(avi.frame);
+		if (bgSub(avi.frame, &bg_diff, frame_diff))
 #else
 		elab(avi.frame);
 		if(true)
 #endif
 		{
+#ifdef BG_SUB
+			addCampione(bg_diff, &campioni);
+#else
 			addCampione(frame_diff, &campioni);
+#endif
 			if(frame_number>1)
 				contatoreBici += findObjectsInLine((&campioni)->andCampioni, maschera, linea, excited_points, &num_excited_points, puntilinea);  //And con la maschera e mette il risultato in linea (Non ha molto senso chiamare linea questa immagine!!)
 			displayImage((&campioni)->andCampioni, "Line"); //visualizza i pixel eccitati della linea
@@ -176,7 +183,7 @@ void elab(IplImage* inputImage)
 		currentImageGray=cvCreateImage(in_size,IPL_DEPTH_8U,1);
 		frame_diff=cvCreateImage(in_size,IPL_DEPTH_8U,1);
 		winOut="two frame difference";
-		cvNamedWindow(winOut, 0);
+		//cvNamedWindow(winOut, 0);
 	}
 	cvCvtColor(inputImage,currentImageGray,CV_BGR2GRAY);
 	if(frame_number==0){//swap
@@ -189,10 +196,10 @@ void elab(IplImage* inputImage)
 	cvAbsDiff(currentImageGray,previous_frame,frame_diff);
 	cvThreshold( frame_diff,frame_diff,thresh,255, CV_THRESH_BINARY );
 	
-	cvErode(frame_diff,frame_diff,NULL,1);
-	cvDilate(frame_diff,frame_diff,NULL,1);
-	cvErode(frame_diff,frame_diff,NULL,1);
-	cvDilate(frame_diff,frame_diff,NULL,3);
+	//cvErode(frame_diff,frame_diff,NULL,1);
+	//cvDilate(frame_diff,frame_diff,NULL,1);
+	//cvErode(frame_diff,frame_diff,NULL,1);
+	//cvDilate(frame_diff,frame_diff,NULL,3);
 		
 	//Visualize
 	cvResizeWindow(winOut,frame_diff->width,frame_diff->height);
