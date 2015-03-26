@@ -8,6 +8,9 @@ io sto utilizzando array bidimensionali per lavorare coi punti al momento
 
 */
 #define BG_SUB
+#ifdef BG_SUB
+	//#define BG_SUB_MODA
+#endif
 
 #include <stdio.h>
 #include "opencv/cv.h"
@@ -16,6 +19,7 @@ io sto utilizzando array bidimensionali per lavorare coi punti al momento
 #include <sstream>
 #include <iomanip>
 #include <math.h>
+#include <unistd.h>
 #include "funzioniLinea.h"
 #include "bgSubtraction.h"
 
@@ -123,10 +127,12 @@ int main(int argc, char** argv)
 	cvInitFont(&contatoreFont, CV_FONT_HERSHEY_SIMPLEX, 1, 1, 0, 3);
 
 #ifdef BG_SUB
-		initBgGray(avi.frame, 100, 0.95, 15);
+	initBgGray(avi.frame, 100, 0.95, 15);
+	th = 8;
+#else
+	th = 3;
 #endif
 
-	th = 3;
 	//printf("Insert threshold value : ");
 	//res=scanf("%d",&th);
 
@@ -139,6 +145,8 @@ int main(int argc, char** argv)
 	{
 
 #ifdef BG_SUB
+	#ifdef BG_SUB_MODA
+	#endif
 		elab(avi.frame);
 		if (bgSub(avi.frame, &bg_diff, frame_diff))
 #else
@@ -158,6 +166,12 @@ int main(int argc, char** argv)
 			sprintf(contatoreStringa, "Bicycles: %d", contatoreBici);
 			cvPutText(avi.frame, contatoreStringa, contatorePoint, &contatoreFont, cvScalar(255, 0 ,0));
 			displayImage(avi.frame,win);
+			printf("Frame %d\n", frame_number);
+			// stop to take photo
+			if (frame_number == 1313 || frame_number == 1540 || frame_number == 2330 || frame_number == 2855 || frame_number == 3310)
+			{
+				sleep(5);
+			}
 		}
 		retcode = (char)cvWaitKey(10);
 		//retcode=(char)(display_image(5));
@@ -196,10 +210,12 @@ void elab(IplImage* inputImage)
 	cvAbsDiff(currentImageGray,previous_frame,frame_diff);
 	cvThreshold( frame_diff,frame_diff,thresh,255, CV_THRESH_BINARY );
 	
-	//cvErode(frame_diff,frame_diff,NULL,1);
-	//cvDilate(frame_diff,frame_diff,NULL,1);
-	//cvErode(frame_diff,frame_diff,NULL,1);
-	//cvDilate(frame_diff,frame_diff,NULL,3);
+#ifndef PIPPO
+	cvErode(frame_diff,frame_diff,NULL,1);
+	cvDilate(frame_diff,frame_diff,NULL,1);
+	cvErode(frame_diff,frame_diff,NULL,1);
+	cvDilate(frame_diff,frame_diff,NULL,3);
+#endif
 		
 	//Visualize
 	cvResizeWindow(winOut,frame_diff->width,frame_diff->height);
@@ -218,13 +234,6 @@ void release(){
 		cvDestroyWindow(winOut);
 }
 
-
-
-//cvCvtColor(inputImage,currentImageGray,CV_BGR2GRAY); //convert color image into an other type (in this case to gray level)
-//cvAbsDiff(currentImageGray,previous_frame,frame_diff); //difference between two frame
-//cvThreshold( frame_diff,frame_diff,thresh,255, CV_THRESH_BINARY );
-//cvErode(frame_diff,frame_diff,NULL,1);
-//cvDilate(frame_diff,frame_diff,NULL,1);
 
 int open_avi(AVI_READER * avi_h)
 {
