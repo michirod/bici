@@ -224,7 +224,8 @@ void release(){
 		cvReleaseImage(&previous_frame);
 		cvReleaseImage(&currentImageGray);
 		cvReleaseImage(&frame_diff);
-		cvDestroyWindow(winOut);
+		if (winOut != 0)
+			cvDestroyWindow(winOut);
 }
 
 
