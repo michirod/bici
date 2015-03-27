@@ -14,7 +14,7 @@
 #include <stdio.h>
 
 //global variables
-IplImage * bg, *bgGray;
+IplImage *bgGray;
 IplImage * fg;
 IplImage * Gray;
 BgGrayHisto bgGrayHisto;
@@ -26,7 +26,6 @@ double alpha, th;
 void initBgGray(IplImage * img, int numInit, double a, double thres)
 {
 	CvSize size = cvSize(img->width, img->height);
-	bg = cvCreateImage(size, IPL_DEPTH_8U, 1);
 	bgGray = cvCreateImage(size, IPL_DEPTH_8U , 1);
 	fg = cvCreateImage(size,IPL_DEPTH_8U , 1);
 	Gray = cvCreateImage(size, IPL_DEPTH_8U , 1);
@@ -76,6 +75,10 @@ void destroyBgGrayInitStructures()
 		free(bgGrayHisto.mat[i]);
 	}
 	free(bgGrayHisto.mat);
+	cvReleaseImage(&bgGray);
+	cvReleaseImage(&fg);
+	cvReleaseImage(&Gray);
+
 }
 
 void createBgGray(IplImage *img, IplImage *mask)
@@ -87,13 +90,16 @@ void createBgGray(IplImage *img, IplImage *mask)
 	{
 		for(int j = 0; j < Gray->width; j++)
 		{
-			if (isMasked && mask->imageData[i*ws + j] == 0)
+			if (isMasked) // se uso una maschera conto il pixel solo se non in foreground
 			{
-				unsigned char val =  Gray->imageData[i*ws + j];
-				bgGrayHisto.mat[j][i].val[val]++;
-				bgGrayHisto.mat[j][i].tot++;
+				if (mask->imageData[i*ws + j] == 0)
+				{
+					unsigned char val =  Gray->imageData[i*ws + j];
+					bgGrayHisto.mat[j][i].val[val]++;
+					bgGrayHisto.mat[j][i].tot++;
+				}
 			}
-			else
+			else // se non uso maschera conto sempre
 			{
 				unsigned char val =  Gray->imageData[i*ws + j];
 				bgGrayHisto.mat[j][i].val[val]++;
@@ -101,14 +107,14 @@ void createBgGray(IplImage *img, IplImage *mask)
 			}
 		}
 	}
-	if (frameCount == numInitFrame - 1)
+	if (frameCount == numInitFrame - 1) //arrivo all'ultimo frame per l'inizializzazione del background
 	{
 		for(int i = 0; i < Gray->height; i++)
 		{
 			for(int j = 0; j < Gray->width; j++)
 			{
 				unsigned char moda;
-				moda = calcolaModa(bgGrayHisto.mat[j][i]);
+				moda = calcolaModa(bgGrayHisto.mat[j][i]); // calcolo la moda per ogni pixel
 				bgGray->imageData[i*ws + j] = moda;
 				bgAverage.mat[j][i].last = moda;
 				bgAverage.mat[j][i].trueBg = moda;
@@ -141,7 +147,7 @@ void updateBgGray(IplImage * img, IplImage *mask)
 			//res = (unsigned char) rint(bg + cur);
 			//res = (unsigned char) bg + cur;
 			diff = abs(curVal - bgVal);
-			if(diff > th)
+			if(diff > th) // creo la change mask
 			{
 				fg->imageData[index] = 255u;
 			}
@@ -150,27 +156,29 @@ void updateBgGray(IplImage * img, IplImage *mask)
 				fg->imageData[index] = 0;
 			}
 
+			// procedo con l'aggiornamento del background
 			if (!isMasked || (isMasked && mask->imageData[index] == 0))
 			{
 				//if(abs(curVal - bgAverage.mat[j][i].last) < 3)
 				if(diff > th)
 				{
+					//se pixel appare nel foreground aumento il contatore di pixel diverso
 					bgAverage.mat[j][i].bigCount++;
 					bgAverage.mat[j][i].bigAccumulator += curVal;
 					bgAverage.mat[j][i].last = curVal;
 					bgAverage.mat[j][i].littleCount = 0;
 					bgAverage.mat[j][i].littleAccumulator = 0;
 				}
-				else
+				else // se la variazione del pixel rispetto al BG è minore della soglia
 				{
 					if (bgAverage.mat[j][i].bigCount != 0)
-					{
+					{// se il pixel in questo frame è il primo simile allo sfondo dopo una serie di frame in cui era foreground
 						if(abs(curVal - bgAverage.mat[j][i].last) < 3)
 							bgGray->imageData[index] = bgAverage.mat[j][i].last;
 					}
-					else
+					else // il pixel non era foreground nei frame precedenti
 					{
-						bgAverage.mat[j][i].littleCount++;
+						bgAverage.mat[j][i].littleCount++; //aumento il contatore delle variazioni piccole
 						bgAverage.mat[j][i].littleAccumulator += curVal;
 						bgAverage.mat[j][i].last = curVal;
 					}
@@ -179,18 +187,22 @@ void updateBgGray(IplImage * img, IplImage *mask)
 				}
 				if (bgAverage.mat[j][i].bigCount > 100)
 				{
+					// se il pixel è diverso dal background per N volte consecutive allora diventa parte del background
 					bgAverage.mat[j][i].last = bgVal;
+					// il nuovo valore è la media degli N valori precendenti
 					bgGray->imageData[index] = (char) (bgAverage.mat[j][i].bigAccumulator / bgAverage.mat[j][i].bigCount);
 					bgAverage.mat[j][i].bigCount = 0;
 					bgAverage.mat[j][i].bigAccumulator = 0;
 				}
 				if (bgAverage.mat[j][i].littleCount > 1)
 				{
+					// se la variazione del pixel è minore della soglia, l'aggiornamento è più veloce (per star dietro ai cambiamenti di luce)
 					bgGray->imageData[index] = (char) (bgAverage.mat[j][i].littleAccumulator / bgAverage.mat[j][i].littleCount);
 					//bgGray->imageData[index] = bgAverage.mat[j][i].last;
 					bgAverage.mat[j][i].littleCount = 0;
 					bgAverage.mat[j][i].littleAccumulator = 0;
 				}
+				// se il pixel ha un valore molto vicino a quello del background, si aggiorna istantaneamente
 				if (abs(curVal - bgAverage.mat[j][i].trueBg) < 3)
 				{
 					//bgGray->imageData[index] = bgAverage.mat[j][i].trueBg;
@@ -234,15 +246,17 @@ void updateBgGrayModa(IplImage * img, IplImage *mask)
 			{
 				bgGrayHisto.mat[j][i].val[curVal]++;
 				bgGrayHisto.mat[j][i].tot++;
-				if (frameCount % numInitFrame == 0)
+				if (frameCount % numInitFrame == 0) // ogni N frame ricalcolo il background
 				{
-					//moda = calcolaMediana(bgGrayHisto.mat[j][i]);
+					//moda = calcolaModa(bgGrayHisto.mat[j][i]);
 					moda = calcolaMediana(bgGrayHisto.mat[j][i]);
 					bgGray->imageData[index] = moda;
+					// azzero le strutture per il calcolo del background
 					memset(bgGrayHisto.mat[j][i].val, 0, bgGrayHisto.mat[j][i].len * sizeof(int));
 					bgGrayHisto.mat[j][i].tot = 0;
 				}
 			}
+			// creo la change mask
 			diff = abs(curVal - bgVal);
 			if(diff > th)
 			{
@@ -290,6 +304,7 @@ unsigned char calcolaMediana(PixelHisto histo)
 bool bgSub(IplImage * img, IplImage ** foreground, IplImage *mask)
 {
 	bool result;
+	//prima parte: background initialization
 	if (frameCount < numInitFrame)
 	{
 		createBgGray(img, mask);
@@ -297,7 +312,7 @@ bool bgSub(IplImage * img, IplImage ** foreground, IplImage *mask)
 		display(winName, bgGray);
 		result = false;
 	}
-	else
+	else //seconda parte: background updating
 	{
 #ifdef BG_SUB_MODA
 		updateBgGrayModa(img, mask);
@@ -308,8 +323,8 @@ bool bgSub(IplImage * img, IplImage ** foreground, IplImage *mask)
 		display(winName, bgGray);
 		sprintf(winName, "Foreground");
 		cvErode(fg,fg,NULL,1);
-		cvDilate(fg,fg,NULL,1);
-		cvErode(fg,fg,NULL,1);
+		//cvDilate(fg,fg,NULL,1);
+		//cvErode(fg,fg,NULL,1);
 		cvDilate(fg,fg,NULL,3);
 		display(winName, fg);
 		*foreground = fg;

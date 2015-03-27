@@ -12,6 +12,7 @@
 #include "opencv/highgui.h"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/video/background_segm.hpp"
+#include "definitions.h"
 
 //bg init structure
 typedef struct
