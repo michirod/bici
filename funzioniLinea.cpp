@@ -1,5 +1,21 @@
 #include "funzioniLinea.h"
 
+#ifdef BG_SUB
+#define AREA_MAX 1620
+#define AREA_MIN 1000
+#define COMPA_MIN 25
+#define COMPA_MAX 40
+#define FF_MIN 2
+#define FF_MAX 2.7
+#else
+#define AREA_MAX 1850
+#define AREA_MIN 900
+#define COMPA_MIN 20
+#define COMPA_MAX 50
+#define FF_MIN 1.65
+#define FF_MAX 2.45
+#endif
+
 void initArrayCampioni(ArrayCampioni * c, CvSize size)
 {
 	for (int i = 0; i < NUMERO_CAMPIONI; i++)
@@ -37,7 +53,9 @@ int findObjectsInLine(IplImage * andCampioni, IplImage * lineMask, IplImage * re
 	int ws = andCampioni->widthStep;
 	int contatemp=0;  //ancora non si aggiorna, sto provando il tutto, poi iniziamo a stoccarli
 	int actual_active_points[EXCITED_POINTS][2];
-	cvDilate(andCampioni,andCampioni,NULL,2);		//importante perchè anche se l'and è risultato di immagini già dilatate risulta essere molto ben definita e con apertureblabla
+#ifndef BG_SUB
+	cvDilate(andCampioni,andCampioni,NULL,2);		//importante perchï¿½ anche se l'and ï¿½ risultato di immagini giï¿½ dilatate risulta essere molto ben definita e con apertureblabla
+#endif
 	cvAnd(andCampioni, lineMask, result, NULL);
 	cvNamedWindow("Object");
 	for (int i = 0; i < result->height; i++)
@@ -48,7 +66,7 @@ int findObjectsInLine(IplImage * andCampioni, IplImage * lineMask, IplImage * re
 				actual_active_points[contatemp][0] = i;	//salvo il punto attivo per il prossimo ciclo
 				actual_active_points[contatemp][1] = j;
 				contatemp++;															   				
-				if(AroundExcitation(i,j,30,active_points, *num_active_points, 0) == 0)  //qui controlliamo se c'era già un oggetto al ciclo precedente. 5 = "raggio" della zona quadrata in cui cerchiamo se è già stato attivato un pixel al frame precedente
+				if(AroundExcitation(i,j,30,active_points, *num_active_points, 0) == 0)  //qui controlliamo se c'era giï¿½ un oggetto al ciclo precedente. 5 = "raggio" della zona quadrata in cui cerchiamo se ï¿½ giï¿½ stato attivato un pixel al frame precedente
 				{
 					//qui invece dobbiamo valutare quanti nuovi oggetti sono presenti, si potrebbe usare lo stesso raggio di eccitazionePrecedente magari facciamo una define
 					if(AroundExcitation(i,j,30,actual_active_points, contatemp, 1) == 0)  //parametro tipo = 1, significa frame attuale
@@ -205,7 +223,7 @@ int AnalyzeObject(IplImage *OBJ, int height, int width, lineaTrapasso puntilinea
 	BaryRow = (int)(BaryRow/Area);		//Barycenter extraction
 	BaryCol = (int)(BaryCol/Area);
 	
-	bParallel = (float)1;			//calcolo coefficienti non è necessario farlo ogni volta, si potrebbe spostare oppure farlo eseguire solo la prima volta
+	bParallel = (float)1;			//calcolo coefficienti non ï¿½ necessario farlo ogni volta, si potrebbe spostare oppure farlo eseguire solo la prima volta
 	aParallel = (float)(puntilinea.B.y - puntilinea.A.y)/(puntilinea.A.x - puntilinea.B.x);
 	cParallel = -aParallel*BaryCol - bParallel*BaryRow;
 	temp = aParallel*BaryCol + bParallel*BaryRow + cParallel;
@@ -298,10 +316,10 @@ int AnalyzeObject(IplImage *OBJ, int height, int width, lineaTrapasso puntilinea
 	
 	cvCopyImage(OBJPer,OBJ);
 
-	if(Area>=900 && Area<=1850)		//parametri temporanei
+	if(Area>=AREA_MIN && Area<=AREA_MAX)		//parametri temporanei
 	{
-		if(FactorForm > 1.65 && FactorForm < 2.45)
-			if(Compactness > 20 && Compactness < 50)
+		if(FactorForm > FF_MIN && FactorForm < FF_MAX)
+			if(Compactness > COMPA_MIN && Compactness < COMPA_MAX)
 				return 1;
 	}
 	
@@ -323,5 +341,5 @@ void displayImage(IplImage * image, char * winName)
 {
 	cvResizeWindow(winName,image->width,image->height);
 	cvShowImage(winName, image);
-	//cvWaitKey(5);  //qui fermiamo tutto per 5ms!!!!! magari andrà tolto ma serve per visualizzare subito l'immagine durante il debug
+	//cvWaitKey(5);  //qui fermiamo tutto per 5ms!!!!! magari andrï¿½ tolto ma serve per visualizzare subito l'immagine durante il debug
 }

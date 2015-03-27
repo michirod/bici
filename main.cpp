@@ -1,14 +1,4 @@
-/* Passiamoci le info qui!
-
-Dunque, piccola nota, abbiamo due funzioni che fanno praticamente lo stesso (int display_image(int delay) e 
-void displayLineStatus(IplImage * line, char * winName))  --> da uniformare!
-
-Poi dobbiamo creare anche una struttura di un punto x,y (anche se credo esista gi�) e utilizzarla per creare le altre strutture perch�
-io sto utilizzando array bidimensionali per lavorare coi punti al momento
-
-*/
-#define BG_SUB
-
+#include "definitions.h"
 #include <stdio.h>
 #include "opencv/cv.h"
 #include "opencv/highgui.h"
@@ -16,6 +6,7 @@ io sto utilizzando array bidimensionali per lavorare coi punti al momento
 #include <sstream>
 #include <iomanip>
 #include <math.h>
+#include <unistd.h>
 #include "funzioniLinea.h"
 #include "bgSubtraction.h"
 
@@ -49,6 +40,7 @@ char via=0;
 IplImage *currentImageGray=0;
 IplImage *previous_frame=0;
 IplImage *frame_diff=0;
+IplImage *bg_diff=0;
 IplImage* ipl=0;
 AVI_READER avi;
 
@@ -67,8 +59,8 @@ int main(int argc, char** argv)
 	IplImage * maschera;
 	IplImage * linea;
 	lineaTrapasso puntilinea;	//conterr� i punti con cui costruiamo la linea di trapasso
-	ArrayCampioni campioni;		//CAMPIONI DI IMMAGINE, MAGARI SISTEMIAMO IL NOME DELLA STRUTTURA
-	int excited_points[EXCITED_POINTS][2];	//da sistemare, magari mettiamo un arrai di strutture punti
+	ArrayCampioni campioni;		//CAMPIONI DI IMMAGINE
+	int excited_points[EXCITED_POINTS][2];
 	int num_excited_points=0;
 	CvSize size;
 	int contatoreBici = 0;
@@ -103,7 +95,12 @@ int main(int argc, char** argv)
 		}
 	}
 	//Mostriamo la maschera contenente la linea di trapasso
-	cvSetMouseCallback(filename, onMouseClick, &puntilinea);
+	//cvSetMouseCallback(filename, onMouseClick, &puntilinea);
+	puntilinea.A.x = 123;
+	puntilinea.A.y = 502;
+	puntilinea.B.x = 285;
+	puntilinea.B.y = 533;
+	via = 1;
 	displayImage(avi.frame,win);
 
 	while(via==0)
@@ -122,11 +119,14 @@ int main(int argc, char** argv)
 	cvInitFont(&contatoreFont, CV_FONT_HERSHEY_SIMPLEX, 1, 1, 0, 3);
 
 #ifdef BG_SUB
-		initBgGray(avi.frame, 100, 0.95, 15);
+	initBgGray(avi.frame, 100, 0.95, 15);
+	th = 8;
+#else
+	th = 3;
 #endif
 
-	printf("Insert threshold value : ");
-	res=scanf("%d",&th);
+	//printf("Insert threshold value : ");
+	//res=scanf("%d",&th);
 
 	if(res==1)
 		thresh=(double)th;
@@ -137,13 +137,20 @@ int main(int argc, char** argv)
 	{
 
 #ifdef BG_SUB
-		if (bgSub(avi.frame, &frame_diff))
+	#ifdef BG_SUB_MODA
+	#endif
+		elab(avi.frame);
+		if (bgSub(avi.frame, &bg_diff, frame_diff))
 #else
 		elab(avi.frame);
 		if(true)
 #endif
 		{
+#ifdef BG_SUB
+			addCampione(bg_diff, &campioni);
+#else
 			addCampione(frame_diff, &campioni);
+#endif
 			if(frame_number>1)
 				contatoreBici += findObjectsInLine((&campioni)->andCampioni, maschera, linea, excited_points, &num_excited_points, puntilinea);  //And con la maschera e mette il risultato in linea (Non ha molto senso chiamare linea questa immagine!!)
 			displayImage((&campioni)->andCampioni, "Line"); //visualizza i pixel eccitati della linea
@@ -151,6 +158,12 @@ int main(int argc, char** argv)
 			sprintf(contatoreStringa, "Bicycles: %d", contatoreBici);
 			cvPutText(avi.frame, contatoreStringa, contatorePoint, &contatoreFont, cvScalar(255, 0 ,0));
 			displayImage(avi.frame,win);
+			//printf("Frame %d\n", frame_number);
+			// stop to take photo
+			if (frame_number == 1313 || frame_number == 1540 || frame_number == 2330 || frame_number == 2855 || frame_number == 3310)
+			{
+				//sleep(5);
+			}
 		}
 		retcode = (char)cvWaitKey(10);
 		//retcode=(char)(display_image(5));
@@ -161,6 +174,9 @@ int main(int argc, char** argv)
 	cvWaitKey(0);
 	close_avi();
 	release();
+#ifdef BG_SUB
+	destroyBgGrayInitStructures();
+#endif
 
 	return 1;
 }
@@ -175,8 +191,8 @@ void elab(IplImage* inputImage)
 		previous_frame=cvCreateImage(in_size,IPL_DEPTH_8U,1);
 		currentImageGray=cvCreateImage(in_size,IPL_DEPTH_8U,1);
 		frame_diff=cvCreateImage(in_size,IPL_DEPTH_8U,1);
-		winOut="two frame difference";
-		cvNamedWindow(winOut, 0);
+		//winOut="two frame difference";
+		//cvNamedWindow(winOut, 0);
 	}
 	cvCvtColor(inputImage,currentImageGray,CV_BGR2GRAY);
 	if(frame_number==0){//swap
@@ -193,10 +209,10 @@ void elab(IplImage* inputImage)
 	cvDilate(frame_diff,frame_diff,NULL,1);
 	cvErode(frame_diff,frame_diff,NULL,1);
 	cvDilate(frame_diff,frame_diff,NULL,3);
-		
+
 	//Visualize
-	cvResizeWindow(winOut,frame_diff->width,frame_diff->height);
-	cvShowImage(winOut, frame_diff);
+	//cvResizeWindow(winOut,frame_diff->width,frame_diff->height);
+	//cvShowImage(winOut, frame_diff);
 	{//swap
 		IplImage *temp=previous_frame;
 		previous_frame=currentImageGray;
@@ -211,13 +227,6 @@ void release(){
 		cvDestroyWindow(winOut);
 }
 
-
-
-//cvCvtColor(inputImage,currentImageGray,CV_BGR2GRAY); //convert color image into an other type (in this case to gray level)
-//cvAbsDiff(currentImageGray,previous_frame,frame_diff); //difference between two frame
-//cvThreshold( frame_diff,frame_diff,thresh,255, CV_THRESH_BINARY );
-//cvErode(frame_diff,frame_diff,NULL,1);
-//cvDilate(frame_diff,frame_diff,NULL,1);
 
 int open_avi(AVI_READER * avi_h)
 {
