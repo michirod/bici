@@ -17,7 +17,7 @@
 	#define NUMERO_CAMPIONI 5
 #endif
 #define LINE_THICKNESS 1
-#define EXCITED_POINTS 500
+#define EXCITED_POINTS 1000
 #define RAGGIO_RICERCA 1
 
 typedef struct

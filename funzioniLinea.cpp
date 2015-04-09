@@ -54,9 +54,9 @@ int findObjectsInLine(IplImage * andCampioni, IplImage * lineMask, IplImage * re
 	int contatemp=0;  
 	int actual_active_points[EXCITED_POINTS][2];
 #ifndef BG_SUB
-	cvDilate(andCampioni,andCampioni,NULL,2);		//importante perch� anche se l'and � risultato di immagini gi� dilatate risulta essere molto ben definita e con apertureblabla
+	cvDilate(andCampioni,result,NULL,2);		//importante perch� anche se l'and � risultato di immagini gi� dilatate risulta essere molto ben definita e con apertureblabla
 #endif
-	cvAnd(andCampioni, lineMask, result, NULL);
+	cvAnd(result, lineMask, result, NULL);
 	cvNamedWindow("Object");
 	for (int i = 0; i < result->height; i++)
 		for (int j = 0; j < result->width; j++)
@@ -138,8 +138,8 @@ void SeedResearch(int startRow, int startCol, int height, int width, IplImage * 
 	while(Stop == 0)
 	{
 		Stop=1;
-		for(int i=0; i<(height-1); i++)
-			for(int j=0; j<(width-1); j++)
+		for(int i=1; i<(height-1); i++)
+			for(int j=1; j<(width-1); j++)
 				if(output->imageData[i*width + j] != 0)
 					for(int k=i-1;k<=i+1;k++)
 						for(int l=j-1;l<=j+1;l++)
@@ -198,8 +198,8 @@ int AnalyzeObject(IplImage *OBJ, int height, int width, lineaTrapasso puntilinea
 	size.width = OBJ->width;
 	OBJPer = cvCreateImage(size,IPL_DEPTH_8U,1);
 	cvSetZero(OBJPer);
-	for(int i=0;i<(height-1);i++)
-		for(int j=0; j<(width-1);j++)
+	for(int i=1;i<(height-1);i++)
+		for(int j=1; j<(width-1);j++)
 		{
 			if(OBJ->imageData[i*width+j]!=0)
 			{

@@ -152,8 +152,10 @@ int main(int argc, char** argv)
 			addCampione(frame_diff, &campioni);
 #endif
 			if(frame_number>1)
+				//contatoreBici += findObjectsInLine(frame_diff, maschera, linea, excited_points, &num_excited_points, puntilinea);
 				contatoreBici += findObjectsInLine((&campioni)->andCampioni, maschera, linea, excited_points, &num_excited_points, puntilinea);  //And con la maschera e mette il risultato in linea (Non ha molto senso chiamare linea questa immagine!!)
 			displayImage((&campioni)->andCampioni, "Line"); //visualizza i pixel eccitati della linea
+			//displayImage(frame_diff, "Line");
 			DisegnaLineaTrapasso(puntilinea);
 			sprintf(contatoreStringa, "Bicycles: %d", contatoreBici);
 			cvPutText(avi.frame, contatoreStringa, contatorePoint, &contatoreFont, cvScalar(255, 0 ,0));
@@ -165,7 +167,7 @@ int main(int argc, char** argv)
 				//sleep(5);
 			}
 		}
-		retcode = (char)cvWaitKey(10);
+		retcode = (char)cvWaitKey(2);
 		//retcode=(char)(display_image(5));
 		frame_number++;
 	}
