@@ -6,7 +6,7 @@
 #include <sstream>
 #include <iomanip>
 #include <math.h>
-#include <unistd.h>
+//#include <unistd.h>
 #include "funzioniLinea.h"
 #include "bgSubtraction.h"
 
@@ -105,7 +105,7 @@ int main(int argc, char** argv)
 
 	while(via==0)
 	{
-		cvWaitKey(10);
+		//cvWaitKey(10);
 	}
 		
 	//inizializzazione strutture

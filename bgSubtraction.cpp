@@ -36,7 +36,7 @@ void initBgGray(IplImage * img, int numInit, double a, double thres)
 
 	bgGrayHisto.matHeight = img->height;
 	bgGrayHisto.matWidth = img->width;
-	int len = pow(2, img->depth);
+	int len = (img->depth * img->depth);//pow(2, img->depth);
 	bgGrayHisto.mat = (PixelHisto **) malloc(sizeof(PixelHisto*) * bgGrayHisto.matWidth);
 	bgAverage.matHeight = img->height;
 	bgAverage.matWidth = img->width;

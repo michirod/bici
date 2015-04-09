@@ -51,7 +51,7 @@ int findObjectsInLine(IplImage * andCampioni, IplImage * lineMask, IplImage * re
 {
 	int numBici = 0;
 	int ws = andCampioni->widthStep;
-	int contatemp=0;  //ancora non si aggiorna, sto provando il tutto, poi iniziamo a stoccarli
+	int contatemp=0;  
 	int actual_active_points[EXCITED_POINTS][2];
 #ifndef BG_SUB
 	cvDilate(andCampioni,andCampioni,NULL,2);		//importante perch� anche se l'and � risultato di immagini gi� dilatate risulta essere molto ben definita e con apertureblabla
@@ -66,7 +66,7 @@ int findObjectsInLine(IplImage * andCampioni, IplImage * lineMask, IplImage * re
 				actual_active_points[contatemp][0] = i;	//salvo il punto attivo per il prossimo ciclo
 				actual_active_points[contatemp][1] = j;
 				contatemp++;															   				
-				if(AroundExcitation(i,j,30,active_points, *num_active_points, 0) == 0)  //qui controlliamo se c'era gi� un oggetto al ciclo precedente. 5 = "raggio" della zona quadrata in cui cerchiamo se � gi� stato attivato un pixel al frame precedente
+				if(AroundExcitation(i,j,30,active_points, *num_active_points, 0) == 0)  //qui controlliamo se c'era gi� un oggetto al ciclo precedente. 30 = "raggio" della zona quadrata in cui cerchiamo se � gi� stato attivato un pixel al frame precedente
 				{
 					//qui invece dobbiamo valutare quanti nuovi oggetti sono presenti, si potrebbe usare lo stesso raggio di eccitazionePrecedente magari facciamo una define
 					if(AroundExcitation(i,j,30,actual_active_points, contatemp, 1) == 0)  //parametro tipo = 1, significa frame attuale
@@ -189,7 +189,7 @@ void SeedResearch(int startRow, int startCol, int height, int width, IplImage * 
 int AnalyzeObject(IplImage *OBJ, int height, int width, lineaTrapasso puntilinea)   //facciamo anche estrarre il perimetro e lo sostituiamo all'oggetto completo
 {
 	int Area=0, Perimeter=0, BaryRow=0, BaryCol=0, negLarg, posLarg, negLung, posLung, temp, Larghezza, Lunghezza, Compactness;
-	bool flagPer;
+	//bool flagPer;
 	float aParallel, bParallel, cParallel, aPerpendicular, bPerpendicular, cPerpendicular, DenParallel, DenPerpendicular, cl1, cl2, cw1, cw2, floatemp, FactorForm;
 	CvPoint interSup, interInf, interLeft, interRight, boundL1, boundL2, boundW1, boundW2, CornTop, CornBottom, CornLeft, CornRight;
 	IplImage *OBJPer;
@@ -206,12 +206,12 @@ int AnalyzeObject(IplImage *OBJ, int height, int width, lineaTrapasso puntilinea
 				Area = Area + 1;		//Area calculator
 				BaryRow = BaryRow + i;
 				BaryCol = BaryCol + j;
-				flagPer=0;
+				//flagPer=0;
 				for(int k=i-1;k<=i+1;k++)
 					for(int l=j-1;l<=j+1;l++)
 						if(OBJ->imageData[k*width+l]==0)
 						{
-							flagPer=1;		//Perimeter calculator
+							//flagPer=1;		//Perimeter calculator
 							l=j+2;
 							k=i+2;
 							Perimeter=Perimeter+1;
@@ -226,7 +226,7 @@ int AnalyzeObject(IplImage *OBJ, int height, int width, lineaTrapasso puntilinea
 	bParallel = (float)1;			//calcolo coefficienti non � necessario farlo ogni volta, si potrebbe spostare oppure farlo eseguire solo la prima volta
 	aParallel = (float)(puntilinea.B.y - puntilinea.A.y)/(puntilinea.A.x - puntilinea.B.x);
 	cParallel = -aParallel*BaryCol - bParallel*BaryRow;
-	temp = aParallel*BaryCol + bParallel*BaryRow + cParallel;
+	//temp = aParallel*BaryCol + bParallel*BaryRow + cParallel;
 	aPerpendicular = bParallel;
 	bPerpendicular = -aParallel;
 	cPerpendicular = -aPerpendicular*BaryCol - bPerpendicular*BaryRow;
