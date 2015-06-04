@@ -54,9 +54,9 @@ int findObjectsInLine(IplImage * andCampioni, IplImage * lineMask, IplImage * re
 	int contatemp=0;  
 	int actual_active_points[EXCITED_POINTS][2];
 #ifndef BG_SUB
-	cvDilate(andCampioni,result,NULL,2);		//importante perch� anche se l'and � risultato di immagini gi� dilatate risulta essere molto ben definita e con apertureblabla
+	cvDilate(andCampioni,andCampioni,NULL,2);		//importante perch� anche se l'and � risultato di immagini gi� dilatate risulta essere molto ben definita e con apertureblabla
 #endif
-	cvAnd(result, lineMask, result, NULL);
+	cvAnd(andCampioni, lineMask, result, NULL);
 	cvNamedWindow("Object");
 	for (int i = 0; i < result->height; i++)
 		for (int j = 0; j < result->width; j++)

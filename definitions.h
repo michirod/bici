@@ -8,7 +8,7 @@
 #ifndef DEFINITIONS_H_
 #define DEFINITIONS_H_
 
-#define BG_SUB
+//#define BG_SUB
 #ifdef BG_SUB
 	//#define BG_SUB_MODA
 #endif
